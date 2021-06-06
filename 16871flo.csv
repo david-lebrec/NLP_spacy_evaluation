@@ -1,0 +1,144 @@
+Named Entity Recognition through Classifier Combination
+
+
+Radu Florian and Abe Ittycheriah and Hongyan Jing and Tong Zhang
+IBM T.J. Watson Research Center
+1101 Kitchawan Rd, Yorktown Heights, NY 10598, USA
+{raduf,abei,hjing,tzhang}@us.ibm.com
+
+
+
+
+Abstract                                     decision arbitrary feature types, while HMM is de-
+pendent on a prespecified back-off path.
+This paper presents a classifier-combination                  • The search methods employed by each classifier are
+experimental framework for named entity                         different: the HMM, MaxEnt and RRM classifiers
+recognition in which four diverse classi-                       construct a model for each example and then rely
+fiers (robust linear classifier, maximum en-                    on a sequence search such as the Viterbi algorithm
+tropy, transformation-based learning, and hid-                  (Viterbi, 1967) to identify the best overall sequence,
+den Markov model) are combined under differ-                    while fnTBL starts with most frequent classification
+ent conditions. When no gazetteer or other ad-                  (usually per token), and then dynamically models
+ditional training resources are used, the com-                  the interaction between classifications, effectively
+bined system attains a performance of 91.6F                     performing the search at training time.
+"on the English development data; integrat-                    • The classifiers also differ in their output: fnTBL"
+ing name, location and person gazetteers, and                   and RRM return a single classification per exam-
+named entity systems trained on additional,                     ple1 , while the MaxEnt and HMM classifiers return
+more general, data reduces the F-measure error                  a probability distribution.
+by a factor of 15 to 21% on the English data.
+The remainder of the paper is organized as follows: Sec-
+tion 2 describes the features used by the classifiers, Sec-
+1     Introduction                                              tion 3 briefly describes the algorithms used by each clas-
+sifier, and Section 4 analyzes in detail the results obtained
+This paper investigates the combination of a set of di-         by each classifier and their combination.
+verse statistical named entity classifiers, including a
+rule-based classifier – the transformation-based learning       2     The Classification Method and Features
+"classifier (Brill, 1995; Florian and Ngai, 2001, hence-               Used"
+forth fnTBL) with the forward-backward extension de-
+scribed in Florian (2002a), a hidden Markov model clas-         All algorithms described in this paper identify the named
+sifier (henceforth HMM), similar to the one described           entities in the text by labeling each word with a tag
+in Bikel et al. (1999), a robust risk minimization classi-      corresponding to its position relative to a named entity:
+fier, based on a regularized winnow method (Zhang et al.,       whether it starts/continues/ends a specific named entity,
+2002) (henceforth RRM) and a maximum entropy clas-              or does not belong to any entity. RRM, MaxEnt, and
+"sifier (Darroch and Ratcliff, 1972; Berger et al., 1996;        fnTBL treat the problem entirely as a tagging task, while"
+Borthwick, 1999) (henceforth MaxEnt). This particular           the HMM algorithm used here is constraining the transi-
+set of classifiers is diverse across multiple dimensions,       tions between the various phases, similar to the method
+making it suitable for combination:                             described in (Bikel et al., 1999).
+Feature design and integration is of utmost importance
+• fnTBL is a discriminant classifier – it bases its clas-
+in the overall classifier design – a rich feature space is the
+sification decision only on the few most discriminant
+key to good performance. Often, high performing classi-
+features active on an example – while HMM, RRM
+fiers operating in an impoverished space are surpassed by
+and MaxEnt are agglomerative classifiers – their de-
+a lower performing classifier when the latter has access
+cision is based on the combination of all features ac-
+"to enhanced feature spaces (Zhang et al., 2002; Florian,"
+tive for the particular example.
+• In dealing with the data sparseness problem, fnTBL,          1
+However, both classifiers’ algorithms can be modified such
+MaxEnt and RRM investigate and integrate in their         that a class probability distribution is returned instead.
+2002a). In accordance with this observation, the clas-                                   English          German
+sifiers used in this research can access a diverse set of                               (a)    (b)       (a)   (b)
+features when examining a word in context, including:                       HMM        82.0 74.6          -     -
+• words and their lemmas in a 5-word-window sur-                          TBL       88.1 81.2        69.5 68.6
+rounding the current word                                             MaxEnt     90.8 85.6        68.0 67.3
+• the part-of-speech tags of the current and surround-                    RRM       92.1 85.5        70.7 71.3
+ing words
+• the text chunks in a -1..1 window                           Tab. 1: Individual classifier results on the two test sets.
+• the prefixes and suffixes of length up to 4 of the cur-
+rent and the surrounding words
+• a word feature flag for each word, similar to the flag         TBL has some attractive qualities that make it suitable
+"described in (Bikel et al., 1999); examples of such        for the language-related tasks: it can automatically in-"
+assigned flags are firstCap, 2digit and allCaps.           tegrate heterogeneous types of knowledge, without the
+• gazetteer information, in the form of a list of 50,000      need for explicit modeling, it is error–driven, and has an
+cities, 80,000 proper names and 3500 organizations         inherently dynamic behavior.
+• the output of other two named entity classifiers,              The particular setup in which fnTBL is used in this
+trained on a richer tagset data (32 named categories),     work is described in Florian (2002a): in a first phase,
+used in the IBM question answering system (Itty-           TBL is used to identify the entity boundaries, followed by
+cheriah et al., 2001)                                      a sequence classification stage, where the entities identi-
+fied at the first step are classified using internal and exter-
+In addition, a ngram-based capitalization restoration al-
+nal clues3 .
+gorithm has been applied on the sentences that appear in
+all caps2 , for the English task.                                3.4     The Hidden Markov Model Classifier
+3 The Algorithms                                                 The HMM classifier used in the experiments in Section
+4 follows the system description in (Bikel et al., 1999),
+This section describes only briefly the classifiers used in      and it performs sequence classification by assigning each
+"combination in Section 4; a full description of the algo-        word either one of the named entity types or the label"
+"rithms and their properties is beyond the scope of this pa-      NOT-A-NAME to represent ""not a named entity"". The"
+per – the reader is instead referred to the original articles.   states in the HMM are organized into regions, one re-
+gion for each type of named entity plus one for NOT-
+3.1    The Robust Risk Minimization Classifier
+A-NAME. Within each of the regions, a statistical bi-
+This classifier is described in detail in (Zhang and John-       gram language model is used to compute the likelihood of
+son, 2003, this volume), along with a comprehensive              words occurring within that region (named entity type).
+evaluation of its performance, and therefore is not pre-         The transition probabilities are computed by deleted in-
+sented here.                                                     terpolation (Jelinek, 1997), and the decoding is done
+through the Viterbi algorithm. The particular implemen-
+3.2    The Maximum Entropy Classifier
+tation we used underperformed consistently all the other
+The MaxEnt classifier computes the posterior class prob-         classifiers on German, and is not included.
+ability of an example by evaluating the normalized prod-
+uct of the weights active for the particular example. The        4       Combination Methodology and
+model weights are trained using the improved iterative
+Experimental Results
+scaling algorithm (Berger et al., 1996). To avoid running
+in severe over-training problems, a feature cutoff of 4 is       The results obtained by each individual classifier, bro-
+applied before the model weights are learned. At decod-          ken down by entity type, are presented in Table 1. Out
+ing time, the best sequence of classifications is identified     of the four classifiers, the MaxEnt and RRM classifiers
+with the Viterbi algorithm.                                      are the best performers, followed by the modified fnTBL
+classifier and the HMM classifier. The error-based clas-
+3.3    The Transformation-Based Learning Classifier
+sifiers (RRM and fnTBL) tend to obtain balanced preci-
+Transformation-based learning is an error-driven algo-           sion/recall numbers, while the other two tend to be more
+rithm which has two major steps: it starts by assigning          precise at the expense of recall. To facilitate comparison
+some classification to each example, and then automat-           with other classifiers for this task, most reported results
+ically proposing, evaluating and selecting the classifica-
+3
+tion changes that maximally decrease the number of er-                The method of retaining only the boundaries and reclas-
+rors.                                                            sifying the entities was shown to improve the performance of
+11 of the 12 systems participating in the CoNLL-2002 shared
+2
+Usually, document titles, but also table headers, etc.     tasks, in both languages (Florian, 2002b).
+are obtained by using features exclusively extracted from                  Method            Precision    Recall    Fmeasure
+the training data.                                                      Best Classifier       91.37%      88.56%     89.94
+In general, given n classifiers, one can interpret the             Equal voting          91.5±0.13    91.0±0.06 91.23±0.08
+classifier combination framework as combining probabil-              Weighted voting         92.13%       91.00%      91.56
+ity distributions:
+Model 1            90.99%      90.81%      90.9
+P   (C|w, C1n )   =f   ((Pi (C|w, C1n ))i=1...n )    (1)            Model 2            92.43%      90.86%     91.64
+RRM (Combo)              92.01%      91.25%     91.63
+where Ci is the classifier i’s classification output, f is
+a combination function. A widely used combination
+Tab. 2: Classifier combination results on English devset
+scheme is through linear interpolation of the classifiers’
+data (no gazetteers of any kind)
+class probability distribution
+n
+X                                                            Development                Test
+P (C|w, C1n )    =          P (C|w, i, Ci ) · P (i|w)               Language      Unique Corpus         Unique Corpus
+i=1
+English          33.4%   8.0%      40.3%   11.7%
+n
+X                                              German            52%    16.2%     48.6%   14.2%
