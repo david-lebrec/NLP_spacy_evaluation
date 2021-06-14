@@ -30,7 +30,7 @@ def read_pdf():
         if words == '\n':
             words = ' '
         page_content = page_content + words
-    print('not devide')
+    print('not divide')
     text = page_content
     doc = nlp(text)
     display_tokens(doc)
@@ -65,7 +65,7 @@ def read_pdf2_page4():
 
 
 def read_raw_text_direct():
-    print('NOT DEVIDE')
+    print('NOT DIVIDE')
     nlp = spacy.load("en_core_web_sm")
     doc = nlp(raw_text)
     display_tokens(doc)
@@ -79,13 +79,13 @@ def read_pdf3():
         return textPage1
 
 
-def divide_string(string_to_devide: str):
+def divide_string(string_to_divide: str):
     """
         take the last 30% of a string
     """
-    str_char_count = len(string_to_devide)
+    str_char_count = len(string_to_divide)
     char_index_to_split = int(0.7 * str_char_count)
-    return string_to_devide[char_index_to_split:]
+    return string_to_divide[char_index_to_split:]
 
 '''
 
